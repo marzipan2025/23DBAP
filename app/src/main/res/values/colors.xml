@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 23DBAP 브랜드 컬러 (AppIcon_23DBAP.png에서 추출) -->
+    <color name="ic_launcher_background">#EB3800</color>
+    <color name="dbap_orange">#EB3800</color>
+    <color name="dbap_amber">#FFB020</color>
+    <color name="dbap_maroon">#8C0026</color>
+
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>
