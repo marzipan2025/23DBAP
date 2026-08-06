@@ -38,8 +38,20 @@ import com.artbrain.dbap.ui.theme.DbapDarkOrange
 import com.artbrain.dbap.ui.theme._23DBAPTheme
 import kotlinx.coroutines.launch
 
-/** 손을 뗀 지점이 이 구간(화면 가운데 20%) 안이면 정중앙으로 스냅 */
-private val SNAP_RANGE = 0.4f..0.6f
+/** 드래그 가능 범위 — 이 바깥으로는 아예 움직이지 않는다 */
+private const val DRAG_MIN = 0.13f
+private const val DRAG_MAX = 0.87f
+
+/**
+ * 스냅 규칙 — (손을 뗀 지점이 이 구간 안이면) to (붙을 목표값)
+ * 스냅 지점 0.15 / 0.5 / 0.85.
+ * 자유 구간은 0.30~0.40, 0.60~0.70 두 군데만 남는다.
+ */
+private val SNAP_RULES = listOf(
+    DRAG_MIN..0.30f to 0.15f,
+    0.40f..0.60f to 0.50f,
+    0.70f..DRAG_MAX to 0.85f
+)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,7 +89,7 @@ private fun rememberScreenCornerRadius(fallback: Dp = 32.dp): Dp {
 /**
  * 위아래로 배치된 두 개의 라운딩 셀.
  * 사이의 간격을 잡고 드래그하면 두 셀의 높이 비율이 바뀐다.
- * 손을 뗀 지점이 가운데 20% 안이면 정중앙으로 스냅된다.
+ * 손을 뗀 지점이 0.2 / 0.5 / 0.8 의 ±0.05 안이면 해당 지점으로 스냅된다.
  */
 @Composable
 fun DualPaneScreen() {
@@ -138,12 +150,14 @@ fun DualPaneScreen() {
                     val usablePx = with(density) { usableHeight.toPx() }
                     detectVerticalDragGestures(
                         onDragEnd = {
-                            // 손을 뗀 지점이 화면 가운데 20% 구간(0.4~0.6) 안이면
-                            // 정중앙(0.5)으로 스냅
-                            if (topFraction.value in SNAP_RANGE) {
+                            // 손을 뗀 지점이 스냅 구간 안이면 해당 목표값으로 붙는다
+                            val target = SNAP_RULES
+                                .firstOrNull { (range, _) -> topFraction.value in range }
+                                ?.second
+                            if (target != null) {
                                 scope.launch {
                                     topFraction.animateTo(
-                                        targetValue = 0.5f,
+                                        targetValue = target,
                                         animationSpec = spring(
                                             dampingRatio = Spring.DampingRatioLowBouncy,
                                             stiffness = Spring.StiffnessMediumLow
@@ -156,9 +170,11 @@ fun DualPaneScreen() {
                         change.consume()
                         if (usablePx > 0f) {
                             scope.launch {
+                                // 드래그 가능 범위를 0.15~0.85로 제한.
+                                // 그 바깥으로는 손가락을 움직여도 셀이 따라가지 않는다.
                                 topFraction.snapTo(
                                     (topFraction.value + dragAmount / usablePx)
-                                        .coerceIn(0.15f, 0.85f)
+                                        .coerceIn(DRAG_MIN, DRAG_MAX)
                                 )
                             }
                         }
