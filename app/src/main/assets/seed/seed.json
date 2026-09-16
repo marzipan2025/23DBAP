@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "books": [
+    {"goodsNo": 6430748, "title": "말과 사물", "author": "미셸 푸코", "publisher": "민음사", "yearMonth": "201202", "heightMm": 224},
+    {"goodsNo": 64438007, "title": "구술문화와 문자문화", "author": "월터 J. 옹", "publisher": "문예출판사", "yearMonth": "201808", "heightMm": 224},
+    {"goodsNo": 2856495, "title": "감각의 논리", "author": "질 들뢰즈", "publisher": "민음사", "yearMonth": "200802", "heightMm": 224},
+    {"goodsNo": 153522770, "title": "구토", "author": "장 폴 사르트르", "publisher": "문예출판사", "yearMonth": "202509", "heightMm": 210},
+    {"goodsNo": 4827613, "title": "이방인", "author": "알베르 까뮈", "publisher": "민음사", "yearMonth": "201103", "heightMm": 225}
+  ]
+}

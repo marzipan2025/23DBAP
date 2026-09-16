@@ -2,7 +2,7 @@ package com.artbrain.dbap.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// --- 23DBAP 브랜드 컬러 (AppIcon_23DBAP에서 추출) ---
+// --- 23BKSF 브랜드 컬러 ---
 val DbapOrange = Color(0xFFEB3800)   // 아이콘 배경 오렌지
 val DbapAmber = Color(0xFFFFB020)    // 위쪽 셀 - 노란색
 val DbapDarkOrange = Color(0xFFA33500) // 아래쪽 셀 - 어두운 주황색

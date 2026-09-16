@@ -22,6 +22,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "23DBAP"
+rootProject.name = "23BKSF"
 include(":app")
  

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 23DBAP 브랜드 컬러 (AppIcon_23DBAP.png에서 추출) -->
+    <!-- 23BKSF 브랜드 컬러 (AppIcon_23BKSF.png 배경 #EB3800) -->
     <color name="ic_launcher_background">#EB3800</color>
     <color name="dbap_orange">#EB3800</color>
     <color name="dbap_amber">#FFB020</color>
