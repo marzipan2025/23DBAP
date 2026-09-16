@@ -16,12 +16,15 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -53,17 +56,21 @@ import com.artbrain.dbap.ui.theme._23DBAPTheme
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-/** 드래그 가능 범위 — 이 바깥으로는 아예 움직이지 않는다 */
-private const val DRAG_MIN = 0.13f
+/** 드래그 가능 범위 — 이 바깥으로는 아예 움직이지 않는다.
+ *  최소 스냅(0.24)보다 살짝 더 당길 수 있게 여유를 둔다. */
+private const val DRAG_MIN = 0.22f
 private const val DRAG_MAX = 0.87f
+
+/** 위 셀이 이 비율 이상일 때 책 제목을 보여준다 */
+private const val TITLE_MIN_FRACTION = 0.40f
 
 /**
  * 스냅 규칙 — (손을 뗀 지점이 이 구간 안이면) to (붙을 목표값)
- * 스냅 지점 0.15 / 0.5 / 0.85.
- * 자유 구간은 0.30~0.40, 0.60~0.70 두 군데만 남는다.
+ * 스냅 지점 0.24(위 셀 최소 높이) / 0.5 / 0.85.
+ * 자유 구간은 0.33~0.40, 0.60~0.70 두 군데만 남는다.
  */
 private val SNAP_RULES = listOf(
-    DRAG_MIN..0.30f to 0.15f,
+    DRAG_MIN..0.33f to 0.24f,
     0.40f..0.60f to 0.50f,
     0.70f..DRAG_MAX to 0.85f
 )
@@ -104,7 +111,7 @@ private fun rememberScreenCornerRadius(fallback: Dp = 32.dp): Dp {
 /**
  * 위아래로 배치된 두 개의 라운딩 셀.
  * 사이의 간격을 잡고 드래그하면 두 셀의 높이 비율이 바뀐다.
- * 손을 뗀 지점이 0.2 / 0.5 / 0.8 의 ±0.05 안이면 해당 지점으로 스냅된다.
+ * 손을 뗀 지점에 따라 0.24 / 0.5 / 0.85 로 스냅된다 ([SNAP_RULES]).
  */
 @Composable
 fun DualPaneScreen() {
@@ -145,7 +152,16 @@ fun DualPaneScreen() {
                     .height(topHeight)
                     .clip(RoundedCornerShape(cornerRadius))
                     .background(DbapAmber)
-            )
+            ) {
+                BookShelf(
+                    books = SAMPLE_BOOKS,
+                    modifier = Modifier.fillMaxSize(),
+                    // 셀이 작아졌을 때 책이 상태바와 겹치지 않게 한다
+                    topInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
+                    // 위 셀이 전체의 40% 이상일 때만 제목을 보여준다
+                    showTitle = topFraction >= TITLE_MIN_FRACTION
+                )
+            }
             Spacer(modifier = Modifier.height(gap))
             Box(
                 modifier = Modifier
