@@ -43,6 +43,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
@@ -110,9 +113,11 @@ private const val SHADOW_R = 0xA2
 private const val SHADOW_G = 0x60
 private const val SHADOW_B = 0x16
 
-/** 책 제목 — 책 아랫선에서의 간격, 글자 크기 */
-private const val TITLE_GAP_DP = 6f
-private const val TITLE_SIZE_DP = 14f
+/** 책 제목 — 책 아랫선에서의 간격, 글자 크기, 색, 글꼴(Paperlogy Light) */
+private const val TITLE_GAP_DP = 10f
+private const val TITLE_SIZE_DP = 12f
+private val TITLE_COLOR = Color(0xFF5D3306)
+private val TITLE_FONT = FontFamily(Font(R.font.paperlogy_light, FontWeight.Light))
 
 /** 원근감 — 카메라 거리 = 책 높이 × 이 값. 작을수록 입체감이 과장된다 */
 private const val CAMERA_DISTANCE_RATIO = 2.2f
@@ -320,7 +325,9 @@ fun BookShelf(
                         book = loaded[i],
                         centerX = cx + f.centerX,
                         centerY = baseline - heightOf(i) / 2f,
-                        camX = cx,
+                        // 카메라를 책마다 그 책 정면에 둔다 — 회전이 좌우 대칭으로 보이고,
+                        // 옆으로 돈 표지가 원근 때문에 비껴 보이는 일이 없다
+                        camX = cx + f.centerX,
                         camY = camY,
                         height = heightOf(i),
                         theta = f.theta,
@@ -340,13 +347,15 @@ fun BookShelf(
             val titleTop = baseline + with(density) { TITLE_GAP_DP.dp.toPx() }
             Text(
                 text = books[centerIndex].title,
-                color = Color.Black,
+                color = TITLE_COLOR,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = TextStyle(
                     fontSize = titleSize,
                     lineHeight = titleSize,
+                    fontFamily = TITLE_FONT,
+                    fontWeight = FontWeight.Light,
                     platformStyle = PlatformTextStyle(includeFontPadding = false)
                 ),
                 modifier = Modifier
@@ -457,12 +466,13 @@ private class BookPainter(
         }
 
         // 표지 아래 그림자 — 표지가 열릴수록 진해진다
-        val frontFacing = c
-        if (frontFacing > 0.01f) {
-            project(-w / 2, top, d / 2, dst, 0)
-            project(w / 2, top, d / 2, dst, 2)
-            project(w / 2, bottom, d / 2, dst, 4)
-            project(-w / 2, bottom, d / 2, dst, 6)
+        // 면을 그릴지는 투영된 사각형이 앞면을 보이는지(넓이 부호)로 정한다.
+        // cosθ 같은 정사영 기준으로 자르면 원근상 아직 폭이 남은 사다리꼴이 한순간에 사라진다.
+        project(-w / 2, top, d / 2, dst, 0)
+        project(w / 2, top, d / 2, dst, 2)
+        project(w / 2, bottom, d / 2, dst, 4)
+        project(-w / 2, bottom, d / 2, dst, 6)
+        if (quadArea(dst) > 0f) {
             if (openness > 0.01f) {
                 shadowPaint.setShadowLayer(
                     height * 0.06f, 0f, height * 0.025f + shadowDropPx,
@@ -470,18 +480,27 @@ private class BookPainter(
                 )
                 fillQuad(canvas, dst, shadowPaint)
             }
-            drawFace(canvas, book.front, frontFacing)
+            drawFace(canvas, book.front, c)
         }
 
         // 책등 — 왼쪽 가장자리가 뒤표지 쪽, 오른쪽이 앞표지 쪽
-        val spineFacing = s
-        if (spineFacing > 0.01f) {
-            project(-w / 2, top, -d / 2, dst, 0)
-            project(-w / 2, top, d / 2, dst, 2)
-            project(-w / 2, bottom, d / 2, dst, 4)
-            project(-w / 2, bottom, -d / 2, dst, 6)
-            drawFace(canvas, book.spine, spineFacing)
+        project(-w / 2, top, -d / 2, dst, 0)
+        project(-w / 2, top, d / 2, dst, 2)
+        project(-w / 2, bottom, d / 2, dst, 4)
+        project(-w / 2, bottom, -d / 2, dst, 6)
+        if (quadArea(dst) > 0f) {
+            drawFace(canvas, book.spine, s)
         }
+    }
+
+    /** 화면 좌표(y 아래 방향)에서 TL→TR→BR→BL 순서일 때 양수 = 앞면이 보인다 */
+    private fun quadArea(p: FloatArray): Float {
+        var sum = 0f
+        for (i in 0 until 4) {
+            val j = (i + 1) % 4
+            sum += p[i * 2] * p[j * 2 + 1] - p[j * 2] * p[i * 2 + 1]
+        }
+        return sum / 2f
     }
 
     private fun drawFace(canvas: android.graphics.Canvas, bitmap: Bitmap, facing: Float) {
